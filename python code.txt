@@ -1,0 +1,71 @@
+import RPi.GPIO as GPIO
+import time
+
+# GPIO Mode
+GPIO.setmode(GPIO.BCM)
+
+# Sensor Pins
+sensor_entry = 17
+sensor_exit = 27
+
+# Servo Pin
+servo_pin = 18
+
+# Setup Pins
+GPIO.setup(sensor_entry, GPIO.IN)
+GPIO.setup(sensor_exit, GPIO.IN)
+GPIO.setup(servo_pin, GPIO.OUT)
+
+# PWM for Servo
+pwm = GPIO.PWM(servo_pin, 50)  # 50Hz frequency
+pwm.start(0)
+
+# Crowd Limit
+MAX_LIMIT = 5
+count = 0
+
+# Function to open gate
+def open_gate():
+    pwm.ChangeDutyCycle(7)  # Adjust for your servo
+    time.sleep(1)
+
+# Function to close gate
+def close_gate():
+    pwm.ChangeDutyCycle(2)  # Adjust for your servo
+    time.sleep(1)
+
+print("System Started")
+
+try:
+    while True:
+        
+        # Entry Sensor Triggered
+        if GPIO.input(sensor_entry) == 0:
+            if count < MAX_LIMIT:
+                count += 1
+                print("Person Entered. Count:", count)
+                open_gate()
+                time.sleep(2)
+                close_gate()
+            else:
+                print("Limit Reached! Gate Closed")
+
+            time.sleep(1)
+
+        # Exit Sensor Triggered
+        if GPIO.input(sensor_exit) == 0:
+            if count > 0:
+                count -= 1
+                print("Person Exited. Count:", count)
+                open_gate()
+                time.sleep(2)
+                close_gate()
+
+            time.sleep(1)
+
+except KeyboardInterrupt:
+    print("System Stopped")
+
+finally:
+    pwm.stop()
+    GPIO.cleanup()
